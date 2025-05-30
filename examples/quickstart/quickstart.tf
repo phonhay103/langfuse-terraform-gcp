@@ -1,6 +1,7 @@
 module "langfuse" {
   source = "../.."
 
+  # Optional: If you want DNS and TLS configuration, provide a domain
   domain = "langfuse.example.com"
 
   # Optional use a different name for your installation

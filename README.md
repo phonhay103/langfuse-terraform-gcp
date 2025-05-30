@@ -20,12 +20,13 @@ This module aims to provide a production-ready, secure, and scalable deployment 
 - Network Connectivity API
 - Service Networking API
 
-2. Set up the module with the settings that suit your need. A minimal installation requires a `domain` which is under your control only.
+2. Set up the module with the settings that suit your need. Providing a `domain` is optional but recommended for production environments.
 
 ```hcl
 module "langfuse" {
   source = "github.com/langfuse/langfuse-terraform-gcp?ref=0.1.0"
 
+  # Optional: Domain name if you want DNS and TLS configuration
   domain = "langfuse.example.com"
   
   # Optional use a different name for your installation
@@ -51,14 +52,16 @@ provider "helm" {
 }
 ```
 
-2. Apply the DNS zone and the GKE Cluster. This avoids an error around missing dependencies on the [kubernetes_manifest](https://github.com/hashicorp/terraform-provider-kubernetes/issues/1775).
+2. Apply the GKE Cluster and DNS zone (if a domain is provided). This avoids an error around missing dependencies on the [kubernetes_manifest](https://github.com/hashicorp/terraform-provider-kubernetes/issues/1775).
 
 ```bash
 terraform init
-terraform apply --target module.langfuse.google_dns_managed_zone.this --target module.langfuse.google_container_cluster.this
+terraform apply --target module.langfuse.google_container_cluster.this
+# Only if you provided a domain:
+terraform apply --target 'module.langfuse.google_dns_managed_zone.this[0]'
 ```
 
-3. Set up the Nameserver delegation on your DNS provider. You can find the nameservers using the following command. Replace `langfuse` with your zone name, e.g. `langfuse-example-com`.
+3. If you provided a domain, set up the Nameserver delegation on your DNS provider. You can find the nameservers using the following command. Replace `langfuse` with your zone name, e.g. `langfuse-example-com`.
 
 ```bash
 $ gcloud dns managed-zones describe langfuse --format="get(nameServers)"
@@ -70,7 +73,9 @@ $ gcloud dns managed-zones describe langfuse --format="get(nameServers)"
 terraform apply
 ```
 
-5. Start using Langfuse by navigating to `https://<domain>` in your browser.
+5. Start using Langfuse by navigating to your instance:
+   - If you provided a domain: `https://<domain>` in your browser.
+   - If you didn't provide a domain: Use the external IP of the LoadBalancer (you can find it via `kubectl get svc -n langfuse`).
 
 ### Known issues
 
@@ -164,7 +169,7 @@ This module creates a complete Langfuse stack with the following components:
 | Name                                | Description                                                                                    | Type   | Default                 | Required |
 |-------------------------------------|------------------------------------------------------------------------------------------------|--------|-------------------------|:--------:|
 | name                                | Name to use for or prefix resources with                                                       | string | "langfuse"              |    no    |
-| domain                              | Domain name used to host langfuse on (e.g., langfuse.company.com)                              | string | n/a                     |   yes    |
+| domain                              | Domain name used to host langfuse on (e.g., langfuse.company.com)                              | string | null                    |    no    |
 | use_encryption_key                  | Wheter or not to use an Encryption key for LLM API credential and integration credential store | bool   | true                    |    no    |
 | kubernetes_namespace                | Namespace to deploy langfuse to                                                                | string | "langfuse"              |    no    |
 | subnetwork_cidr                     | CIDR block for Subnetwork                                                                      | string | "10.0.0.0/16"           |    no    |

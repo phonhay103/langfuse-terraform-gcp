@@ -1,6 +1,7 @@
 locals {
   # Convert domain to bucket-friendly format (e.g., company.com -> company-com)
-  bucket_prefix = replace(var.domain, ".", "-")
+  # If domain is not provided, use a default prefix
+  bucket_prefix = var.domain != null ? replace(var.domain, ".", "-") : "langfuse-storage"
 }
 
 resource "google_storage_bucket" "langfuse" {

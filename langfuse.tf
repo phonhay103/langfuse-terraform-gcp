@@ -1,4 +1,7 @@
 locals {
+  # Define default URL when domain is not provided
+  # When domain is null, we use a placeholder that will be replaced by actual IP later
+  base_url  = var.domain != null ? "https://${var.domain}" : "http://langfuse.local"
   langfuse_values   = <<EOT
 langfuse:
   salt:
@@ -6,7 +9,7 @@ langfuse:
       name: ${kubernetes_secret.langfuse.metadata[0].name}
       key: salt
   nextauth:
-    url: "https://${var.domain}"
+    url: "${local.base_url}"
     secret:
       secretKeyRef:
         name: ${kubernetes_secret.langfuse.metadata[0].name}
@@ -78,10 +81,10 @@ langfuse:
     className: gce  # Ignored in GCP but required from K8s
     annotations:
       kubernetes.io/ingress.class: gce
-      ingress.gcp.kubernetes.io/pre-shared-cert: ${var.name}
-      networking.gke.io/v1beta1.FrontendConfig: https-redirect
+      ${var.domain != null ? "ingress.gcp.kubernetes.io/pre-shared-cert: ${var.name}" : ""}
+      ${var.domain != null ? "networking.gke.io/v1beta1.FrontendConfig: https-redirect" : ""}
     hosts:
-    - host: ${var.domain}
+    - host: ${var.domain != null ? var.domain : ""}
       paths:
       - path: /
         pathType: Prefix

@@ -5,8 +5,9 @@ variable "name" {
 }
 
 variable "domain" {
-  description = "Domain name used to host langfuse on (e.g., langfuse.company.com)"
+  description = "Domain name used to host langfuse on (e.g., langfuse.company.com). If not provided, no DNS or TLS configuration will be created."
   type        = string
+  default     = null
 }
 
 variable "use_encryption_key" {
