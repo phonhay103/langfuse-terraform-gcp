@@ -68,3 +68,47 @@ variable "langfuse_chart_version" {
   type        = string
   default     = "1.2.15"
 }
+
+variable "additional_env" {
+  description = "Additional environment variables to add to the Langfuse container. Supports both direct values and Kubernetes valueFrom references (secrets, configMaps, fieldRef, resourceFieldRef)."
+  type = list(object({
+    name = string
+    # Direct value (mutually exclusive with valueFrom)
+    value = optional(string)
+    # Kubernetes valueFrom reference (mutually exclusive with value)
+    valueFrom = optional(object({
+      # Reference to a Secret key
+      secretKeyRef = optional(object({
+        name = string
+        key  = string
+        optional = optional(bool)
+      }))
+      # Reference to a ConfigMap key
+      configMapKeyRef = optional(object({
+        name = string
+        key  = string
+        optional = optional(bool)
+      }))
+      # Reference to a field in the Pod spec
+      fieldRef = optional(object({
+        fieldPath = string
+        apiVersion = optional(string)
+      }))
+      # Reference to a resource field
+      resourceFieldRef = optional(object({
+        resource = string
+        containerName = optional(string)
+        divisor = optional(string)
+      }))
+    }))
+  }))
+  default = []
+
+  validation {
+    condition = alltrue([
+      for env in var.additional_env :
+      (env.value != null && env.valueFrom == null) || (env.value == null && env.valueFrom != null)
+    ])
+    error_message = "Each environment variable must have either 'value' or 'valueFrom' specified, but not both."
+  }
+}
