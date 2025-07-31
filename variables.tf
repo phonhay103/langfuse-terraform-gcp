@@ -66,11 +66,11 @@ variable "deletion_protection" {
 variable "langfuse_chart_version" {
   description = "Version of the Langfuse Helm chart to deploy"
   type        = string
-  default     = "1.2.15"
+  default     = "1.3.3"
 }
 
 variable "additional_env" {
-  description = "Additional environment variables to add to the Langfuse container. Supports both direct values and Kubernetes valueFrom references (secrets, configMaps, fieldRef, resourceFieldRef)."
+  description = "Additional environment variables to add to the Langfuse container. Supports both direct values and Kubernetes valueFrom references (secrets, configMaps)."
   type = list(object({
     name = string
     # Direct value (mutually exclusive with valueFrom)
@@ -81,24 +81,11 @@ variable "additional_env" {
       secretKeyRef = optional(object({
         name = string
         key  = string
-        optional = optional(bool)
       }))
       # Reference to a ConfigMap key
       configMapKeyRef = optional(object({
         name = string
         key  = string
-        optional = optional(bool)
-      }))
-      # Reference to a field in the Pod spec
-      fieldRef = optional(object({
-        fieldPath = string
-        apiVersion = optional(string)
-      }))
-      # Reference to a resource field
-      resourceFieldRef = optional(object({
-        resource = string
-        containerName = optional(string)
-        divisor = optional(string)
       }))
     }))
   }))
