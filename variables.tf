@@ -66,7 +66,7 @@ variable "deletion_protection" {
 variable "langfuse_chart_version" {
   description = "Version of the Langfuse Helm chart to deploy"
   type        = string
-  default     = "1.3.4"
+  default     = "1.5.0"
 }
 
 variable "additional_env" {
