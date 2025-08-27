@@ -67,5 +67,36 @@ variable "deletion_protection" {
 variable "langfuse_chart_version" {
   description = "Version of the Langfuse Helm chart to deploy"
   type        = string
-  default     = "1.2.15"
+  default     = "1.5.0"
+}
+
+variable "additional_env" {
+  description = "Additional environment variables to add to the Langfuse container. Supports both direct values and Kubernetes valueFrom references (secrets, configMaps)."
+  type = list(object({
+    name = string
+    # Direct value (mutually exclusive with valueFrom)
+    value = optional(string)
+    # Kubernetes valueFrom reference (mutually exclusive with value)
+    valueFrom = optional(object({
+      # Reference to a Secret key
+      secretKeyRef = optional(object({
+        name = string
+        key  = string
+      }))
+      # Reference to a ConfigMap key
+      configMapKeyRef = optional(object({
+        name = string
+        key  = string
+      }))
+    }))
+  }))
+  default = []
+
+  validation {
+    condition = alltrue([
+      for env in var.additional_env :
+      (env.value != null && env.valueFrom == null) || (env.value == null && env.valueFrom != null)
+    ])
+    error_message = "Each environment variable must have either 'value' or 'valueFrom' specified, but not both."
+  }
 }

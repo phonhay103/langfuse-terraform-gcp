@@ -27,7 +27,7 @@ This module aims to provide a production-ready, secure, and scalable deployment 
 
 ```hcl
 module "langfuse" {
-  source = "github.com/langfuse/langfuse-terraform-gcp?ref=0.1.2"
+  source = "github.com/langfuse/langfuse-terraform-gcp?ref=0.2.2"
 
   # Optional: Domain name if you want DNS and TLS configuration
   domain = "langfuse.example.com"
@@ -40,7 +40,7 @@ module "langfuse" {
   subnetwork_cidr = "10.0.0.0/16"
 
   # Optional: Configure the Langfuse Helm chart version
-  langfuse_chart_version = "1.2.15"
+  langfuse_chart_version = "1.5.0"
 }
 
 provider "kubernetes" {
@@ -119,6 +119,48 @@ This module creates a complete Langfuse stack with the following components:
 - GKE Ingress Controller for ingress
 - Filestore CSI Driver for persistent storage
 
+## Additional Environment Variables
+
+The module supports injecting custom environment variables into the Langfuse container through the `additional_env` parameter. This feature supports both direct values and Kubernetes `valueFrom` references.
+
+```hcl
+module "langfuse" {
+  source = "github.com/langfuse/langfuse-terraform-gcp"
+
+  domain = "langfuse.example.com"
+
+  additional_env = [
+    # Direct value
+    {
+      name  = "LOG_LEVEL"
+      value = "debug"
+    },
+
+    # Secret reference
+    {
+      name = "API_KEY"
+      valueFrom = {
+        secretKeyRef = {
+          name = "my-secrets"
+          key  = "api-key"
+        }
+      }
+    },
+
+    # ConfigMap reference
+    {
+      name = "CONFIG_FILE"
+      valueFrom = {
+        configMapKeyRef = {
+          name = "app-config"
+          key  = "config.json"
+        }
+      }
+    }
+  ]
+}
+```
+
 ## Requirements
 
 | Name        | Version |
@@ -172,20 +214,21 @@ This module creates a complete Langfuse stack with the following components:
 
 ## Inputs
 
-| Name                                | Description                                                                                    | Type   | Default                 | Required |
-|-------------------------------------|------------------------------------------------------------------------------------------------|--------|-------------------------|:--------:|
-| name                                | Name to use for or prefix resources with                                                       | string | "langfuse"              |    no    |
-| domain                              | Domain name used to host langfuse on (e.g., langfuse.company.com)                              | string | null                    |    no    |
-| use_encryption_key                  | Wheter or not to use an Encryption key for LLM API credential and integration credential store | bool   | true                    |    no    |
-| kubernetes_namespace                | Namespace to deploy langfuse to                                                                | string | "langfuse"              |    no    |
-| subnetwork_cidr                     | CIDR block for Subnetwork                                                                      | string | "10.0.0.0/16"           |    no    |
-| database_instance_tier              | The machine type to use for the database instance                                              | string | "db-perf-optimized-N-2" |    no    |
-| database_instance_edition           | The edition to use for the database instance                                                   | string | "ENTERPRISE_PLUS"       |    no    |
-| database_instance_availability_type | The availability type to use for the database instance                                         | string | "REGIONAL"              |    no    |
-| cache_tier                          | The service tier of the instance                                                               | string | "STANDARD_HA"           |    no    |
-| cache_memory_size_gb                | Redis memory size in GB                                                                        | number | 1                       |    no    |
-| deletion_protection                 | Whether or not to enable deletion_protection on data sensitive resources                       | bool   | true                    |    no    |
-| langfuse_chart_version              | Version of the Langfuse Helm chart to deploy                                                   | string | "1.2.15"                 |    no    |
+| Name                                | Description                                                                                                                                                                                               | Type         | Default                 | Required |
+|-------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------|-------------------------|:--------:|
+| name                                | Name to use for or prefix resources with                                                                                                                                                                  | string       | "langfuse"              |    no    |
+| domain                              | Domain name used to host langfuse on (e.g., langfuse.company.com)                                                                                                                                         | string       | n/a                     |   yes    |
+| use_encryption_key                  | Wheter or not to use an Encryption key for LLM API credential and integration credential store                                                                                                            | bool         | true                    |    no    |
+| kubernetes_namespace                | Namespace to deploy langfuse to                                                                                                                                                                           | string       | "langfuse"              |    no    |
+| subnetwork_cidr                     | CIDR block for Subnetwork                                                                                                                                                                                 | string       | "10.0.0.0/16"           |    no    |
+| database_instance_tier              | The machine type to use for the database instance                                                                                                                                                         | string       | "db-perf-optimized-N-2" |    no    |
+| database_instance_edition           | The edition to use for the database instance                                                                                                                                                              | string       | "ENTERPRISE_PLUS"       |    no    |
+| database_instance_availability_type | The availability type to use for the database instance                                                                                                                                                    | string       | "REGIONAL"              |    no    |
+| cache_tier                          | The service tier of the instance                                                                                                                                                                          | string       | "STANDARD_HA"           |    no    |
+| cache_memory_size_gb                | Redis memory size in GB                                                                                                                                                                                   | number       | 1                       |    no    |
+| deletion_protection                 | Whether or not to enable deletion_protection on data sensitive resources                                                                                                                                  | bool         | true                    |    no    |
+| langfuse_chart_version              | Version of the Langfuse Helm chart to deploy                                                                                                                                                              | string       | "1.5.0"                |    no    |
+| additional_env                      | Additional environment variables to add to the Langfuse container. Supports both direct values and Kubernetes valueFrom references (secrets, configMaps). See examples/additional-env for usage examples. | list(object) | []                      |    no    |
 
 ## Outputs
 
